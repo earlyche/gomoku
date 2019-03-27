@@ -3,7 +3,7 @@
 from django.db import migrations, models
 import django.db.models.deletion
 import enumchoicefield.fields
-import game.types
+import game.internal_types
 
 
 class Migration(migrations.Migration):
@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
             name='Game',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('type', enumchoicefield.fields.EnumChoiceField(enum_class=game.types.GameType, max_length=11)),
+                ('type', enumchoicefield.fields.EnumChoiceField(enum_class=game.internal_types.GameType, max_length=11)),
                 ('player_1', models.CharField(max_length=30)),
                 ('player_2', models.CharField(max_length=30)),
                 ('start_date', models.DateTimeField(auto_now_add=True)),

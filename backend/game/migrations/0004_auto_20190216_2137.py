@@ -2,7 +2,7 @@
 
 from django.db import migrations
 import enumchoicefield.fields
-import game.types
+import game.internal_types
 
 
 class Migration(migrations.Migration):
@@ -15,6 +15,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='game',
             name='type',
-            field=enumchoicefield.fields.EnumChoiceField(enum_class=game.types.GameType, max_length=11),
+            field=enumchoicefield.fields.EnumChoiceField(enum_class=game.internal_types.GameType, max_length=11),
         ),
     ]

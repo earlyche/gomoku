@@ -2,7 +2,7 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
 from game.models import Game, Tile
-from game.types import GameType
+from game.internal_types import GameType
 
 
 class GameSerializer(serializers.ModelSerializer):
