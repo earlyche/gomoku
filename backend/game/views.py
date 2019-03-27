@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from game.serializers import GameSerializer, TileSerializer
-from game.models import Game
+from game.models import Tile
 
 
 class GameView(GenericAPIView):
@@ -25,8 +25,10 @@ class TileView(GenericAPIView):
         serializer = self.serializer_class(data=request.data)
         if not serializer.is_valid(raise_exception=True):
             return Response(serializer.error_messages, status.HTTP_400_BAD_REQUEST)
-        serializer.save()
-        return Response(serializer.data, status.HTTP_201_CREATED)
+        tile = serializer.save()
+        tiles = Tile.objects.filter(game=tile.game)
+        tiles_serializer = self.serializer_class(instance=tiles, many=True)
+        return Response(tiles_serializer.data, status.HTTP_201_CREATED)
 
 
 class NextMoveView(APIView):
