@@ -2,10 +2,6 @@ from typing import TYPE_CHECKING, Tuple, Union
 from game.analyzer import Analyzer
 
 
-analyzer = Analyzer()
-print(analyzer)
-
-
 if TYPE_CHECKING:
     from game.node import Node
     from game.rules import GameRules
