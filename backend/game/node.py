@@ -6,11 +6,11 @@ from copy import deepcopy
 from sortedcontainers import SortedList
 from django.utils.functional import cached_property
 
-from game.time_analyzer import TimeAnalyzer
+from game.analyzer import Analyzer
 
 
-time_analyzer = TimeAnalyzer()
-print(time_analyzer)
+analyzer = Analyzer()
+print(analyzer)
 
 
 class Node:
@@ -117,7 +117,7 @@ class Node:
         for tile in self.sorted_tiles:
             self.update_lines(tile)
 
-        time_analyzer.update(time_analyzer.HEURISTIC_FIND_LINES, time.time() - time1)
+        analyzer.update(analyzer.HEURISTIC_FIND_LINES, time.time() - time1)
 
     def update_lines(self, tile):  # TODO: add position
         if tile in self.tiles[self.player_1]:
@@ -145,7 +145,7 @@ class Node:
         assert 0 <= tile[0] < self._x_size
         assert 0 <= tile[1] < self._y_size
 
-        diff = 2  # TODO: check if it is optimal
+        diff = 1  # TODO: check if it is optimal
         result_set = set()
 
         x_min = tile[0] - diff if tile[0] - diff >= 0 else 0

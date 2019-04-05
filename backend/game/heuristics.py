@@ -5,14 +5,14 @@ from typing import TYPE_CHECKING
 from django.utils.functional import cached_property
 
 from game.internal_types import Treat
-from game.time_analyzer import TimeAnalyzer
+from game.analyzer import Analyzer
 
 if TYPE_CHECKING:
     from game.node import Node
 
 
-time_analyzer = TimeAnalyzer()
-print(time_analyzer)
+analyzer = Analyzer()
+print(analyzer)
 
 
 class Heuristic(ABC):
@@ -56,7 +56,7 @@ class HeuristicSimpleTreat(Heuristic):
                 break
 
         time2 = time.time()
-        time_analyzer.update(time_analyzer.HEURISTIC_CALCULATE, time2 - time1)
+        analyzer.update(analyzer.HEURISTIC_CALCULATE, time2 - time1)
 
         node.heuristic_value = max_value if max_value > min_value * (-1) else min_value
         # if node.heuristic_value:
