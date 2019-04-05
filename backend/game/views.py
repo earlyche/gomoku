@@ -13,11 +13,11 @@ from game.node import Node
 from game.algorithm import Minimax
 from game.heuristics import HeuristicSimpleTreat
 from game.rules import GameRules
-from game.time_analyzer import TimeAnalyzer
+from game.analyzer import Analyzer
 
 
-time_analyzer = TimeAnalyzer()
-print(time_analyzer)
+analyzer = Analyzer()
+print(analyzer)
 
 
 class GameView(GenericAPIView):
@@ -48,7 +48,7 @@ class NextMoveView(APIView):
     def get(self, request, game_id: int, player: str):
         # TODO: validate if it is this user turn, and user existence
 
-        time_analyzer.refresh()
+        analyzer.refresh()
 
         if not Game.objects.filter(pk=game_id).exists():
             return Response({'game_id': "Game not found"}, status.HTTP_404_NOT_FOUND)
@@ -67,16 +67,16 @@ class NextMoveView(APIView):
 
         time1 = time.time()
         value, chosen_node = minimax.calculate_minimax(node, 3)
-        time_analyzer.update(time_analyzer.ALL_TIME, time.time() - time1)
+        analyzer.update(analyzer.ALL_TIME, time.time() - time1)
 
         chosen_node.print_children(0)
         for tile, line in chosen_node.lines.items():
             print(tile, line)
-        time_analyzer.print_results()
+        analyzer.print_results()
         print(value)
 
-        redis_conn = redis.StrictRedis(port=6379)
-        redis_conn.set('node_tree', pickle.dumps(node))
+        # redis_conn = redis.StrictRedis(port=6379)
+        # redis_conn.set('node_tree', pickle.dumps(node))
         response = {
             'coordinates': chosen_node.new_move if node else (9, 9)
         }
