@@ -69,7 +69,7 @@ class NextMoveView(APIView):
         value, chosen_node = minimax.calculate_minimax(node, 3)
         time_analyzer.update(time_analyzer.ALL_TIME, time.time() - time1)
 
-        node.print_children(0)
+        chosen_node.print_children(0)
         for tile, line in chosen_node.lines.items():
             print(tile, line)
         time_analyzer.print_results()

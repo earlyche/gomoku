@@ -73,9 +73,7 @@ class Node:
         if not self._sorted_tiles:
             self._sorted_tiles = SortedList()  # TODO: make tiles already sorted while creating and change sortedlist dinamically for created children
             self._sorted_tiles.update(self.tiles_set | self.should_inspect)
-            # print("SORTED")
         return self._sorted_tiles
-        # return tiles
 
     def children(self):
         for coordinate in self.should_inspect:
@@ -89,8 +87,6 @@ class Node:
 
         inspections_for_tile = self._get_inspections_for_tile(tile)
         new_inspections = (self.should_inspect | inspections_for_tile) - {tile}
-        # new_sorted_tiles = deepcopy(self.sorted_tiles)
-        # new_sorted_tiles.update(inspections_for_tile - self.tiles_set)
         node = Node(
             player_1=self.player_1,
             player_2=self.player_2,
@@ -99,12 +95,7 @@ class Node:
             should_inspect=new_inspections,
             new_move=tile,
             father=self,
-            # sorted_tiles=new_sorted_tiles,
-            # lines=self.lines,
         )
-
-        # TODO: BAD IDEA, because of order and sign('x' or 'o'), Should place element in correct position
-        # node.oposite_update_lines(tile)
         return node
 
     def _find_lines(self):
@@ -145,7 +136,7 @@ class Node:
         assert 0 <= tile[0] < self._x_size
         assert 0 <= tile[1] < self._y_size
 
-        diff = 2  # TODO: check if it is optimal
+        diff = 1  # TODO: check if it is optimal
         result_set = set()
 
         x_min = tile[0] - diff if tile[0] - diff >= 0 else 0
