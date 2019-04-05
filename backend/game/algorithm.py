@@ -34,7 +34,7 @@ class Minimax:
             return value, node
         if node.maximizing_player:
             for child in node.children():
-                analyzer.update('node_count', 1)
+                Analyzer.update(Analyzer.NODE_COUNT, 1)
                 new_alpha = self.calculate_minimax(child, depth - 1, alpha, beta)[0]
                 if new_alpha > alpha:
                     alpha = new_alpha
@@ -45,7 +45,7 @@ class Minimax:
             return alpha, alpha_node
         else:
             for child in node.children():
-                analyzer.update('node_count', 1)
+                Analyzer.update(Analyzer.NODE_COUNT, 1)
                 new_beta = self.calculate_minimax(child, depth - 1, alpha, beta)[0]
                 if new_beta < beta:
                     beta = new_beta

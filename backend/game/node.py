@@ -1,4 +1,3 @@
-import time
 from collections import defaultdict
 from typing import Tuple, List, Dict, Set
 from copy import deepcopy
@@ -7,10 +6,6 @@ from sortedcontainers import SortedList
 from django.utils.functional import cached_property
 
 from game.analyzer import Analyzer
-
-
-analyzer = Analyzer()
-print(analyzer)
 
 
 class Node:
@@ -98,17 +93,12 @@ class Node:
         )
         return node
 
+    @Analyzer.update_time(Analyzer.HEURISTIC_FIND_LINES)
     def _find_lines(self):
-
-        time1 = time.time()
-
-        # TODO: add missing tiles between divided areas ??? maybe it's not important
-
+        # TODO: add missing tiles between divided areas ??? or check that it isn't important
         self._lines = defaultdict(str)
         for tile in self.sorted_tiles:
             self.update_lines(tile)
-
-        analyzer.update(analyzer.HEURISTIC_FIND_LINES, time.time() - time1)
 
     def update_lines(self, tile):  # TODO: add position
         if tile in self.tiles[self.player_1]:

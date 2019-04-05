@@ -53,3 +53,14 @@ class TileSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Game not found")
         return game_id
 
+
+class NextMoveSerializer(serializers.Serializer):
+    game = serializers.PrimaryKeyRelatedField(queryset=Game.objects.all())
+    player = serializers.CharField()
+
+    def validate(self, attrs):
+        game = attrs["game"]
+        player = attrs["player"]
+        if player != game.player_1 and player != game.player_2:
+            raise serializers.ValidationError(f"No such player '{player}'")
+        return attrs

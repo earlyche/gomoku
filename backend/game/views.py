@@ -1,13 +1,9 @@
-import time
-import pickle
-
-import redis
 from rest_framework.generics import GenericAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from game.serializers import GameSerializer, TileSerializer
+from game.serializers import GameSerializer, TileSerializer, NextMoveSerializer
 from game.models import Tile, Game
 from game.node import Node
 from game.algorithm import Minimax
@@ -16,17 +12,13 @@ from game.rules import GameRules
 from game.analyzer import Analyzer
 
 
-analyzer = Analyzer()
-print(analyzer)
-
-
 class GameView(GenericAPIView):
     serializer_class = GameSerializer
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
-        if not serializer.is_valid(raise_exception=True):
-            return Response(serializer.error_messages, status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+
         serializer.save()
         return Response(serializer.data, status.HTTP_201_CREATED)
 
@@ -36,8 +28,8 @@ class TileView(GenericAPIView):
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
-        if not serializer.is_valid(raise_exception=True):
-            return Response(serializer.error_messages, status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+
         tile = serializer.save()
         tiles = Tile.objects.filter(game=tile.game)
         tiles_serializer = self.serializer_class(instance=tiles, many=True)
@@ -45,40 +37,37 @@ class TileView(GenericAPIView):
 
 
 class NextMoveView(APIView):
-    def get(self, request, game_id: int, player: str):
-        # TODO: validate if it is this user turn, and user existence
-
-        analyzer.refresh()
-
-        if not Game.objects.filter(pk=game_id).exists():
-            return Response({'game_id': "Game not found"}, status.HTTP_404_NOT_FOUND)
+    def get(self, request, game_id: int, player: str):  # TODO: validate if it is this user turn
+        serializer = NextMoveSerializer(data={"game": game_id, "player": player})
+        serializer.is_valid(raise_exception=True)
         game = Game.objects.get(pk=game_id)
-        if player != game.player_1 and player != game.player_2:
-            return Response({'game_id': "No such player"}, status.HTTP_400_BAD_REQUEST)
 
+        Analyzer.refresh()
+        value, chosen_node = self._get_move(game, player)
+        self._print_logs(value, chosen_node)
+
+        return Response({'coordinates': chosen_node.new_move if chosen_node else (9, 9)},
+                        status.HTTP_200_OK)
+
+    @staticmethod
+    @Analyzer.update_time(Analyzer.ALL_TIME)
+    def _get_move(game, player):
         data = {game.player_1: [], game.player_2: []}
-        for tile in Tile.objects.filter(game_id=game_id):
+        for tile in Tile.objects.filter(game=game):
             data[tile.player].append((tile.x_coordinate, tile.y_coordinate))
+
         node = Node(player_1=game.player_1,
                     player_2=game.player_2,
                     maximizing_player=game.player_1 == player,
                     tiles=data)
         minimax = Minimax(HeuristicSimpleTreat(), GameRules())
-
-        time1 = time.time()
         value, chosen_node = minimax.calculate_minimax(node, 3)
-        analyzer.update(analyzer.ALL_TIME, time.time() - time1)
+        return value, chosen_node
 
-        chosen_node.print_children(0)
-        for tile, line in chosen_node.lines.items():
+    @staticmethod
+    def _print_logs(value: float, node: Node):
+        node.print_children(0)
+        for tile, line in node.lines.items():
             print(tile, line)
-        analyzer.print_results()
+        Analyzer.print_results()
         print(value)
-
-        # redis_conn = redis.StrictRedis(port=6379)
-        # redis_conn.set('node_tree', pickle.dumps(node))
-        response = {
-            'coordinates': chosen_node.new_move if node else (9, 9)
-        }
-        return Response(response, status.HTTP_200_OK)
-
