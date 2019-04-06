@@ -35,6 +35,9 @@ class HeuristicSimpleTreat(Heuristic):
         Treat(x_template='-x--xx-', o_template='-o--oo-', my_turn_value=5000, opponent_turn_value=100),
     ]
 
+    X_WIN_TEMPLATE = 'xxxxx'
+    O_WIN_TEMPLATE = 'ooooo'
+
     @Analyzer.update_time(Analyzer.HEURISTIC_CALCULATE)
     def calculate(self, node: 'Node', *args, **kwargs) -> float:
         score = 0
