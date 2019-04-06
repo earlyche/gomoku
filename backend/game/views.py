@@ -70,8 +70,8 @@ class NextMoveView(APIView):
 
     @staticmethod
     def _print_logs(value: float, node: Node):
+        if not node:
+            return
         node.print_children(0)
-        for tile, line in node.lines.items():
-            print(tile, line)
         Analyzer.print_results()
         print(value)
