@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Tuple, List, Dict, Set
+from typing import Tuple, List, Dict, Set, Union
 from copy import deepcopy
 
 from sortedcontainers import SortedList
@@ -35,7 +35,7 @@ class Node:
         self.father = father
         self.heuristic_value = None
 
-        self.chosen: Tuple[Tuple[int, int], float] = None
+        self.chosen: Union[Tuple[Tuple[int, int], float], None] = None
 
     @property
     def children_amount(self) -> int:
@@ -101,6 +101,16 @@ class Node:
             self.update_lines(tile)
 
     def update_lines(self, tile):  # TODO: add position
+        """
+
+        :param tile:
+
+        1 - horisontal
+        2 - vertical
+        3 - diagonal (from up-left to down-right)
+        4 - diagonal (from up-right to down-left)
+
+        """
         if tile in self.tiles[self.player_1]:
             self._lines[(1, tile[1])] += 'x'
             self._lines[(2, tile[0])] += 'x'
