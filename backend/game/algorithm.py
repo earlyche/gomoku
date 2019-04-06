@@ -1,16 +1,15 @@
 from typing import TYPE_CHECKING, Tuple, Union
-from game.analyzer import Analyzer
 
+from game.analyzer import Analyzer
+from game.rules import GameRules
 
 if TYPE_CHECKING:
     from game.node import Node
-    from game.rules import GameRules
     from game.heuristics import Heuristic
 
 
 class Minimax:
-    def __init__(self, heuristic: 'Heuristic', rules: 'GameRules'):
-        self.rules = rules
+    def __init__(self, heuristic: 'Heuristic'):
         self.heuristic = heuristic
 
     def calculate_minimax(
@@ -25,7 +24,7 @@ class Minimax:
         alpha_node = None
         beta_node = None
 
-        if depth == 0 or self.rules.is_terminated(node):
+        if depth == 0 or GameRules.is_terminated(node):
             value = self.heuristic.calculate(node)
             return value, node
         if node.maximizing_player:

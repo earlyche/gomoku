@@ -29,16 +29,27 @@ class TileView(GenericAPIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-
         tile = serializer.save()
+
+        node = Node.from_game(game=tile.game, player=tile.player)
+        winner = GameRules.is_terminated(node)
+
         tiles = Tile.objects.filter(game=tile.game)
         tiles_serializer = self.serializer_class(instance=tiles, many=True)
-        return Response(tiles_serializer.data, status.HTTP_201_CREATED)
+        return Response(
+            {
+                "tiles": tiles_serializer.data,
+                "winner": winner,
+            },
+            status.HTTP_201_CREATED,
+        )
 
 
 class NextMoveView(APIView):
+    serializer_class = NextMoveSerializer
+
     def get(self, request, game_id: int, player: str):  # TODO: validate if it is this user turn
-        serializer = NextMoveSerializer(data={"game": game_id, "player": player})
+        serializer = self.serializer_class(data={"game": game_id, "player": player})
         serializer.is_valid(raise_exception=True)
         game = Game.objects.get(pk=game_id)
 
@@ -52,16 +63,9 @@ class NextMoveView(APIView):
     @staticmethod
     @Analyzer.update_time(Analyzer.ALL_TIME)
     def _get_move(game, player):
-        data = {game.player_1: [], game.player_2: []}
-        for tile in Tile.objects.filter(game=game):
-            data[tile.player].append((tile.x_coordinate, tile.y_coordinate))
-
-        node = Node(player_1=game.player_1,
-                    player_2=game.player_2,
-                    maximizing_player=game.player_1 == player,
-                    tiles=data)
-        minimax = Minimax(HeuristicSimpleTreat(), GameRules())
-        value, chosen_node = minimax.calculate_minimax(node, 3)
+        node = Node.from_game(game, player)
+        minimax = Minimax(HeuristicSimpleTreat())
+        value, chosen_node = minimax.calculate_minimax(node, 2)
         return value, chosen_node
 
     @staticmethod

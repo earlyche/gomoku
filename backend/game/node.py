@@ -1,11 +1,16 @@
 from collections import defaultdict
-from typing import Tuple, List, Dict, Set, Union
+from typing import Tuple, List, Dict, Set, Union, TYPE_CHECKING
 from copy import deepcopy
 
 from sortedcontainers import SortedList
 from django.utils.functional import cached_property
 
 from game.analyzer import Analyzer
+from game.models import Tile
+
+
+if TYPE_CHECKING:
+    from game.models import Game
 
 
 class Node:
@@ -177,6 +182,19 @@ class Node:
 
         for move, child in self._children.items():
             child.print_children(tabs + 1)
+
+    @staticmethod
+    def from_game(game: 'Game', player: str):
+        data = {game.player_1: [], game.player_2: []}
+        for tile in Tile.objects.filter(game=game):
+            data[tile.player].append((tile.x_coordinate, tile.y_coordinate))
+
+        return Node(
+            player_1=game.player_1,
+            player_2=game.player_2,
+            maximizing_player=game.player_1 == player,
+            tiles=data
+        )
 
     def __str__(self):
         return str(self.tiles)
