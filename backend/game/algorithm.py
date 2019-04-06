@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING, Tuple, Union
+from game.analyzer import Analyzer
 
 
 if TYPE_CHECKING:
@@ -11,7 +12,6 @@ class Minimax:
     def __init__(self, heuristic: 'Heuristic', rules: 'GameRules'):
         self.rules = rules
         self.heuristic = heuristic
-        self._depth = None
 
     def calculate_minimax(
             self,
@@ -25,15 +25,12 @@ class Minimax:
         alpha_node = None
         beta_node = None
 
-        # TODO: remove
-        if not self._depth:
-            self._depth = depth
-
         if depth == 0 or self.rules.is_terminated(node):
             value = self.heuristic.calculate(node)
             return value, node
         if node.maximizing_player:
             for child in node.children():
+                Analyzer.update(Analyzer.NODE_COUNT, 1)
                 new_alpha = self.calculate_minimax(child, depth - 1, alpha, beta)[0]
                 if new_alpha > alpha:
                     alpha = new_alpha
@@ -44,6 +41,7 @@ class Minimax:
             return alpha, alpha_node
         else:
             for child in node.children():
+                Analyzer.update(Analyzer.NODE_COUNT, 1)
                 new_beta = self.calculate_minimax(child, depth - 1, alpha, beta)[0]
                 if new_beta < beta:
                     beta = new_beta

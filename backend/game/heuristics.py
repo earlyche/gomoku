@@ -1,18 +1,16 @@
-import time
 from abc import ABC, abstractmethod
+from collections import namedtuple
 from typing import TYPE_CHECKING
 
 from django.utils.functional import cached_property
 
-from game.internal_types import Treat
-from game.time_analyzer import TimeAnalyzer
+from game.analyzer import Analyzer
 
 if TYPE_CHECKING:
     from game.node import Node
 
 
-time_analyzer = TimeAnalyzer()
-print(time_analyzer)
+Treat = namedtuple('Treat', ['template', 'opponent_template', 'value'])
 
 
 class Heuristic(ABC):
@@ -39,10 +37,10 @@ class HeuristicSimpleTreat(Heuristic):
         Treat(template='-xx-x-', opponent_template='-oo-o-', value=10),
     ]
 
+    @Analyzer.update_time(Analyzer.HEURISTIC_CALCULATE)
     def calculate(self, node: 'Node', *args, **kwargs) -> float:  # TODO: refactor
         max_value = 0
         min_value = 0
-        time1 = time.time()
         for line_key, line in node.lines.items():
             for treat in self.TREAT_TYPES:
                 if treat.value <= max_value and treat.value * (-1) >= min_value:
@@ -54,9 +52,6 @@ class HeuristicSimpleTreat(Heuristic):
                     # break
             if max_value == self.terminated_value or min_value * (-1) == self.terminated_value:
                 break
-
-        time2 = time.time()
-        time_analyzer.update(time_analyzer.HEURISTIC_CALCULATE, time2 - time1)
 
         node.heuristic_value = max_value if max_value > min_value * (-1) else min_value
         # if node.heuristic_value:
