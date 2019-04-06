@@ -2,8 +2,6 @@ from abc import ABC, abstractmethod
 from collections import namedtuple
 from typing import TYPE_CHECKING
 
-from django.utils.functional import cached_property
-
 from game.analyzer import Analyzer
 
 if TYPE_CHECKING:
@@ -54,7 +52,3 @@ class HeuristicSimpleTreat(Heuristic):
                     else:
                         score += treat.opponent_turn_value * (-1)
         return score
-
-
-if __name__ == '__main__':
-    pass
