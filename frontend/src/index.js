@@ -68,11 +68,12 @@ class Game extends React.Component {
       player_1: 'player 1',
       player_2: 'player 2',
       allowMove: true,
+      winner: null,
     };
   }
 
   addTile(i) {
-    if (!this.state.allowMove) {
+    if (!this.state.allowMove || this.state.winner) {
       return
     }
     axios.post(
@@ -85,23 +86,27 @@ class Game extends React.Component {
       }
     )
     .then(response => {
-      const data = response.data.slice();
+      const tiles = response.data.tiles.slice();
+      const winner = response.data.winner;
       const squares = Array(this.state.x_size * this.state.y_size).fill(null);
 
-      console.log(data);
-      for (let i = 0; i < data.length; i++) {
+      for (let i = 0; i < tiles.length; i++) {
         squares[
-          (data[i].y_coordinate * this.state.x_size) + data[i].x_coordinate
-        ] = data[i].player === this.state.player_1 ? 'X' : 'O';
+          (tiles[i].y_coordinate * this.state.x_size) + tiles[i].x_coordinate
+        ] = tiles[i].player === this.state.player_1 ? 'X' : 'O';
       }
 
       this.setState({
         squares: squares,
         xIsNext: !this.state.xIsNext,
+        winner: winner,
       });
+
+      if (winner) {
+        alert("Winner: " + winner);
+      }
     })
     .catch(error => {
-      console.log(error.response);
       alert(error.response.status + " " + error.response.statusText);
     });
   }
@@ -116,7 +121,6 @@ class Game extends React.Component {
       }
     )
     .then(response => {
-      console.log(response.data);
       this.setState({
         gameId: response.data.id,
         player_1: response.data.player_1,
@@ -124,6 +128,8 @@ class Game extends React.Component {
         gameType: gameType,
         squares: Array(this.state.x_size * this.state.y_size).fill(null),
         xIsNext: true,
+        allowMove: true,
+        winner: null,
       });
     })
     .catch(error => {
@@ -136,20 +142,23 @@ class Game extends React.Component {
     const player = this.state.xIsNext ? this.state.player_1 : this.state.player_2;
     const squares = this.state.squares.slice();
 
+    if (this.state.winner) {
+      return;
+    }
+
     this.setState({
       allowMove: false
     });
     axios.get(BACKEND_ENDPOINT + '/api/v1/game/'+this.state.gameId+'/next_move/'+player)
     .then(response => {
-      const x = response.data.coordinates[0]
-      const y = response.data.coordinates[1]
+      const x = response.data.coordinates[0];
+      const y = response.data.coordinates[1];
 
       squares[(y * this.state.x_size) + x] = '.';
       this.setState({
         squares: squares,
         allowMove: true,
       });
-      console.log(response.data);
     })
     .catch(error => {
       alert(error.response.status + " " + error.response.statusText);
@@ -158,7 +167,6 @@ class Game extends React.Component {
   }
 
   render() {
-    console.log("rendered")
     const squares = this.state.squares;
 
     let status = "Next player: " + (this.state.xIsNext ? "X" : "O");
@@ -171,13 +179,16 @@ class Game extends React.Component {
         onClick={i => this.addTile(i)}
         x_size={this.state.x_size}
         y_size={this.state.y_size}
-      />
+      />;
       if (this.state.gameType === GAME_TYPES.MULTIPLAYER) {
         advice_button = <button onClick={() => this.getAdvice()}>
           Get advice
         </button>
       } else {
         advice_button = null;
+      }
+      if (this.state.winner) {
+        status = "Winner: " + this.state.winner;
       }
     } else {
       board = null;
