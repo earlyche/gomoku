@@ -98,6 +98,7 @@ class Game extends React.Component {
         squares: squares,
         winner: winner,
         xIsNext: !this.state.xIsNext,
+        winner: winner,
       });
     })
     .catch(error => {
