@@ -101,10 +101,6 @@ class Game extends React.Component {
         xIsNext: !this.state.xIsNext,
         winner: winner,
       });
-
-      if (winner) {
-        alert("Winner: " + winner);
-      }
     })
     .catch(error => {
       alert(error.response.status + " " + error.response.statusText);
@@ -189,6 +185,7 @@ class Game extends React.Component {
       }
       if (this.state.winner) {
         status = "Winner: " + this.state.winner;
+        alert("Winner: " + this.state.winner);
       }
     } else {
       board = null;
