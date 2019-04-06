@@ -58,8 +58,6 @@ class HeuristicSimpleTreat(Heuristic):
                         score += treat.opponent_turn_value * (-1)
         return score
 
-
-
     # @Analyzer.update_time(Analyzer.HEURISTIC_CALCULATE)
     # def calculate(self, node: 'Node', *args, **kwargs) -> float:  # TODO: refactor
     #     max_value = 0
