@@ -40,3 +40,7 @@ class Analyzer:
     def refresh(cls):
         for variable in cls.values:
             cls.values[variable] = 0.0
+
+    @classmethod
+    def get(cls, variable):
+        return cls.values[variable]
