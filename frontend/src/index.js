@@ -65,11 +65,13 @@ class Game extends React.Component {
       y_size: y_size,
       xIsNext: true,
       gameId: null,
-      player_1: 'player 1',
-      player_2: 'player 2',
+      player_1: 'X',
+      player_2: 'O',
       allowMove: true,
       winner: null,
       xIsBot: null,
+      moveTime: null,
+      botPlayer: null,
     };
   }
 
@@ -98,8 +100,10 @@ class Game extends React.Component {
         squares: squares,
         winner: winner,
         xIsNext: !this.state.xIsNext,
-        winner: winner,
       });
+
+      this.forceUpdate();
+
     })
     .catch(error => {
       console.log(error);
@@ -166,8 +170,11 @@ class Game extends React.Component {
       .then(response => {
         const x = response.data.coordinates[0];
         const y = response.data.coordinates[1];
+        const moveTime = response.data.time;
+
         this.setState({
           allowMove: true,
+          moveTime: moveTime,
         });
         return [x, y]
       })
@@ -177,7 +184,7 @@ class Game extends React.Component {
       });
   }
 
-  startNewGame(gameType, bot_player = null) {
+  startNewGame(gameType, botPlayer = null) {
     axios.post(
       BACKEND_ENDPOINT + '/api/v1/game/',
       {
@@ -196,7 +203,9 @@ class Game extends React.Component {
         xIsNext: true,
         allowMove: true,
         winner: null,
-        xIsBot: bot_player ? (bot_player === 'X') : null,
+        xIsBot: botPlayer ? (botPlayer === 'X') : null,
+        botPlayer: botPlayer,
+        moveTime: null,
       });
     })
     .then(() => {
@@ -212,11 +221,11 @@ class Game extends React.Component {
 
   render() {
     const squares = this.state.squares;
-
-    let status = "Next player: " + (this.state.xIsNext ? "X" : "O");
-
+    let status = <h2>Next player: {(this.state.xIsNext ? "X" : "O")}</h2>;
     let board;
     let advice_button;
+    let moveTime = null;
+
     if (this.state.gameId) {
       board = <Board
         squares={squares}
@@ -232,12 +241,20 @@ class Game extends React.Component {
         advice_button = null;
       }
       if (this.state.winner) {
-        status = "Winner: " + this.state.winner;
-        alert("Winner: " + this.state.winner);
+        const color = (this.state.botPlayer && this.state.botPlayer === this.state.winner) ? "red" : "green";
+        status = <h2 style={{'color': color}}>Winner: {this.state.winner}</h2>;
       }
+
     } else {
       board = null;
       status = null;
+    }
+
+    if (this.state.moveTime) {
+      moveTime =
+        <div className="move-time">
+          Move time: {this.state.moveTime.toFixed(3)} sec.
+        </div>
     }
 
     return (
@@ -246,31 +263,27 @@ class Game extends React.Component {
           {board}
         </div>
         <div className="game-info">
-          <div>{status}</div>
-
+          {status}
           <div>
             <button onClick={() => this.startNewGame(GAME_TYPES.BOT, 'O')}>
               Start new game with bot for X
             </button>
           </div>
-
           <div>
             <button onClick={() => this.startNewGame(GAME_TYPES.BOT, 'X')}>
               Start new game with bot for O
             </button>
           </div>
-
           <div>
             <button onClick={() => this.startNewGame(GAME_TYPES.MULTIPLAYER)}>
               Start new multiplayer game
             </button>
           </div>
-
           <div>
             {advice_button}
           </div>
-
         </div>
+        {moveTime}
       </div>
     );
   }

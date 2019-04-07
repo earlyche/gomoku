@@ -57,8 +57,13 @@ class NextMoveView(APIView):
         value, chosen_node = self._get_move(game, player)
         self._print_logs(value, chosen_node)
 
-        return Response({'coordinates': chosen_node.new_move if chosen_node else (9, 9)},
-                        status.HTTP_200_OK)
+        return Response(
+            {
+                'coordinates': chosen_node.new_move if chosen_node else (9, 9),
+                'time': Analyzer.get(Analyzer.ALL_TIME),
+            },
+            status.HTTP_200_OK
+        )
 
     @staticmethod
     @Analyzer.update_time(Analyzer.ALL_TIME)
