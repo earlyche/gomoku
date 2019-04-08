@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 class Minimax:
     def __init__(self, heuristic: 'Heuristic'):
         self.heuristic = heuristic
+        self.game_rules = GameRules()
 
     def calculate_minimax(
             self,
@@ -24,7 +25,7 @@ class Minimax:
         alpha_node = None
         beta_node = None
 
-        if depth == 0 or GameRules.is_terminated(node):
+        if depth == 0 or self.game_rules.is_terminated(node):
             value = self.heuristic.calculate(node)
             return value, node
         if node.maximizing_player:

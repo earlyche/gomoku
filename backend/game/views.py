@@ -32,7 +32,10 @@ class TileView(GenericAPIView):
         tile = serializer.save()
 
         node = Node.from_game(game=tile.game, player=tile.player)
-        winner = GameRules.is_terminated(node)
+        for capture in node.find_captures_to_delete(tile.game):
+            tile.game.remove_capture(capture, node.maximizing_player)
+
+        winner = GameRules().is_terminated(node)
 
         tiles = Tile.objects.filter(game=tile.game)
         tiles_serializer = self.serializer_class(instance=tiles, many=True)
