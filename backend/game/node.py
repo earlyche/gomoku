@@ -15,6 +15,9 @@ if TYPE_CHECKING:
 
 
 class Node:
+    _x_size = 19
+    _y_size = 19
+
     def __init__(
             self,
             player_1: str,
@@ -25,11 +28,7 @@ class Node:
             lines: Dict[Tuple[int, int], str] = None,
             new_move: Tuple[int, int] = None,
             father: 'Node' = None,
-            sorted_tiles: 'SortedList' = None,
     ):
-        self._x_size = 19
-        self._y_size = 19
-        self._sorted_tiles = sorted_tiles
         self.player_1 = player_1
         self.player_2 = player_2
         self.maximizing_player = maximizing_player
@@ -40,6 +39,7 @@ class Node:
         self._children: Dict[Tuple[int, int], Node] = {}
         self.father = father
         self.heuristic_value = None
+        self._sorted_tiles = None
         self.capture_count = 0
 
         self.chosen: Union[Tuple[Tuple[int, int], float], None] = None
@@ -208,8 +208,10 @@ class Node:
             if (tile_xy.x + 1, tile_xy.y) in tiles[self.another_player] \
                     and (tile_xy.x + 2, tile_xy.y) in tiles[self.another_player] \
                     and (tile_xy.x + 3, tile_xy.y) in tiles[self.player]:
-                captures.append(TileXY(x=tile_xy.x + 1, y=tile_xy.y))
-                captures.append(TileXY(x=tile_xy.x + 2, y=tile_xy.y))
+                captures.append(
+                    (TileXY(x=tile_xy.x + 1, y=tile_xy.y),
+                     TileXY(x=tile_xy.x + 2, y=tile_xy.y),)
+                )
             if (tile_xy.x - 1, tile_xy.y) in tiles[self.another_player] \
                     and (tile_xy.x - 2, tile_xy.y) in tiles[self.another_player] \
                     and (tile_xy.x - 3, tile_xy.y) in tiles[self.player]:

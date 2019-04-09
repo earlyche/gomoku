@@ -34,7 +34,9 @@ class TileView(GenericAPIView):
 
         node = Node.from_game(game=tile.game, player=tile.player)
 
+        print(node.find_captures_to_delete(tile_xy=TileXY.from_serializer(tile)))
         for capture in node.find_captures_to_delete(tile_xy=TileXY.from_serializer(tile)):
+            print(capture)
             Tile.objects.filter(game=tile.game,
                                 x_coordinate__in=(capture[0].x, capture[1].x),
                                 y_coordinate__in=(capture[0].y, capture[1].y),).delete()
