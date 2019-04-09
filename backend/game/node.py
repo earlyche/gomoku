@@ -7,7 +7,7 @@ from django.utils.functional import cached_property
 
 from game.analyzer import Analyzer
 from game.models import Tile
-from game.internal_types import Capture
+from game.internal_types import TileXY
 
 
 if TYPE_CHECKING:
@@ -64,7 +64,7 @@ class Node:
         return set(self.used_tiles)
 
     @property
-    def lines(self):
+    def lines(self):  # TODO: maybe can be cached
         if not self._lines:
             self._find_lines()
         return self._lines
@@ -194,61 +194,64 @@ class Node:
             player_1=game.player_1,
             player_2=game.player_2,
             maximizing_player=game.player_1 == player,
-            tiles=data
+            tiles=data,
         )
 
-    def find_captures_to_delete(self, game: 'Game') -> List[Capture]:  # TODO: search only in line with new move
-        template = 'xoox' if self.maximizing_player else 'oxxo'
+    def find_captures_to_delete(self, tile_xy: TileXY) -> List[TileXY]:
         captures = []
-        for line_key, line in self.lines.items():
-            if template in line:
-                capture = self._get_capture_prepared_line(line_key, game)
-                captures.append(capture)
+        template = 'xoox' if self.maximizing_player else 'oxxo'
+        lines = self.lines
+        tiles = self.tiles
+
+        if template in lines[(1, tile_xy.y)]:  # Horizontal
+            if (tile_xy.x + 1, tile_xy.y) in tiles[self.another_player] \
+                    and (tile_xy.x + 2, tile_xy.y) in tiles[self.another_player] \
+                    and (tile_xy.x + 3, tile_xy.y) in tiles[self.player]:
+                captures.append(TileXY(x=tile_xy.x + 1, y=tile_xy.y))
+                captures.append(TileXY(x=tile_xy.x + 2, y=tile_xy.y))
+            if (tile_xy.x - 1, tile_xy.y) in tiles[self.another_player] \
+                    and (tile_xy.x - 2, tile_xy.y) in tiles[self.another_player] \
+                    and (tile_xy.x - 3, tile_xy.y) in tiles[self.player]:
+                captures.append(TileXY(x=tile_xy.x - 1, y=tile_xy.y))
+                captures.append(TileXY(x=tile_xy.x - 2, y=tile_xy.y))
+
+        if template in lines[(2, tile_xy.x)]:  # Vertical
+            if (tile_xy.x, tile_xy.y + 1) in tiles[self.another_player] \
+                    and (tile_xy.x, tile_xy.y + 2) in tiles[self.another_player] \
+                    and (tile_xy.x, tile_xy.y + 3) in tiles[self.player]:
+                captures.append(TileXY(x=tile_xy.x, y=tile_xy.y + 1))
+                captures.append(TileXY(x=tile_xy.x, y=tile_xy.y + 2))
+            if (tile_xy.x, tile_xy.y - 1) in tiles[self.another_player] \
+                    and (tile_xy.x, tile_xy.y - 2) in tiles[self.another_player] \
+                    and (tile_xy.x, tile_xy.y - 3) in tiles[self.player]:
+                captures.append(TileXY(x=tile_xy.x, y=tile_xy.y - 1))
+                captures.append(TileXY(x=tile_xy.x, y=tile_xy.y - 2))
+
+        if template in lines[(3, tile_xy.x - tile_xy.y)]:  # Diagonal (from up-left to down-right)
+            if (tile_xy.x + 1, tile_xy.y + 1) in tiles[self.another_player] \
+                    and (tile_xy.x + 2, tile_xy.y + 2) in tiles[self.another_player] \
+                    and (tile_xy.x + 3, tile_xy.y + 3) in tiles[self.player]:
+                captures.append(TileXY(x=tile_xy.x + 1, y=tile_xy.y + 1))
+                captures.append(TileXY(x=tile_xy.x + 2, y=tile_xy.y + 2))
+            if (tile_xy.x - 1, tile_xy.y - 1) in tiles[self.another_player] \
+                    and (tile_xy.x - 2, tile_xy.y - 2) in tiles[self.another_player] \
+                    and (tile_xy.x - 3, tile_xy.y - 3) in tiles[self.player]:
+                captures.append(TileXY(x=tile_xy.x - 1, y=tile_xy.y - 1))
+                captures.append(TileXY(x=tile_xy.x - 2, y=tile_xy.y - 2))
+
+        if template in lines[(4, tile_xy.x + tile_xy.y)]:  # Diagonal (from up-right to down-left)
+            if (tile_xy.x + 1, tile_xy.y - 1) in tiles[self.another_player] \
+                    and (tile_xy.x + 2, tile_xy.y - 2) in tiles[self.another_player] \
+                    and (tile_xy.x + 3, tile_xy.y - 3) in tiles[self.player]:
+                captures.append(TileXY(x=tile_xy.x + 1, y=tile_xy.y - 1))
+                captures.append(TileXY(x=tile_xy.x + 2, y=tile_xy.y - 2))
+            if (tile_xy.x - 1, tile_xy.y + 1) in tiles[self.another_player] \
+                    and (tile_xy.x - 2, tile_xy.y + 2) in tiles[self.another_player] \
+                    and (tile_xy.x - 3, tile_xy.y + 3) in tiles[self.player]:
+                captures.append(TileXY(x=tile_xy.x - 1, y=tile_xy.y + 1))
+                captures.append(TileXY(x=tile_xy.x - 2, y=tile_xy.y + 2))
+
         return captures
-
-    def _get_capture_prepared_line(self, line_key: Tuple[int, int], game: 'Game') -> Capture:
-        """
-        :param line_key:
-
-            line_key[0] is type of line. Can be 1, 2, 3 or 4
-
-            1 - horizontal
-            2 - vertical
-            3 - diagonal (from up-left to down-right)
-            4 - diagonal (from up-right to down-left)
-
-            line_key[1] is number of line
-
-            Example: if line_key = (2, 6), it means that this is 6th vertical line
-        """
-
-        prepared_line = None
-
-        if line_key[0] == 1:  # Horizontal
-
-            tiles = Tile.objects.filter(game=game, y_coordinate=line_key[1]).order_by('x_coordinate')
-            left_edge = tiles[0].x_coordinate
-            right_edge = tiles.reverse()[0].x_coordinate
-            prepared_line = [Capture()] * (right_edge - left_edge + 1)
-            for tile in tiles:
-                prepared_line[tile.x_coordinate - left_edge] = \
-                    Capture(symbol='x', tile=(tile.x_coordinate, tile.y_coordinate)) \
-                    if tile.player == self.player_1 \
-                    else Capture(symbol='o', tile=(tile.x_coordinate, tile.y_coordinate))
-
-        elif line_key[0] == 2:  # Vertical
-
-            tiles = Tile.objects.filter(game=game, x_coordinate=line_key[1]).order_by('y_coordinate')
-            top_edge = tiles[0].y_coordinate
-            bottom_edge = tiles.reverse()[0].y_coordinate
-            prepared_line = [Capture()] * (bottom_edge - top_edge + 1)
-            for tile in tiles:
-                prepared_line[tile.y_coordinate - top_edge] = \
-                    Capture(symbol='x', tile=(tile.x_coordinate, tile.y_coordinate)) \
-                    if tile.player == self.player_1 \
-                    else Capture(symbol='o', tile=(tile.x_coordinate, tile.y_coordinate))
-
-        return prepared_line
 
     def __str__(self):
         return str(self.tiles)

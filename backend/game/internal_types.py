@@ -7,9 +7,16 @@ class GameType(Enum):
     MULTIPLAYER = 'multiplayer'
 
 
-class Capture(NamedTuple):
-    symbol: str = None
-    tile: Tuple[int, int] = None
+class TileXY(NamedTuple):
+    x: int
+    y: int
+
+    @staticmethod
+    def from_serializer(tile_serializer):
+        return TileXY(
+            x=tile_serializer.x_coordinate,
+            y=tile_serializer.y_coordinate,
+        )
 
 
 class TerminatedException(Exception):
