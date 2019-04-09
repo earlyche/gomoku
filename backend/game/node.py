@@ -105,11 +105,6 @@ class Node:
         if captures:
             node.update_from_captures(captures)
 
-        if node.new_move == (6, 10):
-            print(captures)
-            print(node.maximizing_player)
-            print(node.pretty)
-
         return node
 
     def update_from_captures(self, captures: List[Tuple[TileXY, TileXY]]):

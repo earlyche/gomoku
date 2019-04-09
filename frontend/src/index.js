@@ -130,6 +130,9 @@ class Game extends React.Component {
   }
 
   getAdviceAndMove() {
+    if (this.state.winner) {
+      return
+    }
     this.getAdvice()
       .then(data => {
         const x = data[0];
