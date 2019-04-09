@@ -25,6 +25,9 @@ class TileXY(NamedTuple):
             y=coordinates_tuple[1],
         )
 
+    def to_tuple(self):
+        return self.x, self.y
+
 
 class TerminatedException(Exception):
     pass

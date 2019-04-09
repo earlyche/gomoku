@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, NamedTuple
+from functools import wraps
+
+from singleton_decorator import singleton
 
 from game.analyzer import Analyzer
-from game.internal_types import TileXY
 
 if TYPE_CHECKING:
     from game.node import Node
@@ -23,10 +25,21 @@ class Heuristic(ABC):
         super().__init__(*args, **kwargs)
 
     @abstractmethod
-    def calculate(self, node: 'Node', *args, **kwargs) -> float:  #TODO: change float to int
+    def calculate(self, node: 'Node', *args, **kwargs) -> float:  # TODO: change float to int
         pass
 
 
+def update_node_heuristic_value(func):
+    @wraps(func)
+    def wrapper(self, node: 'Node', *args, **kwargs):
+        return_value = func(self, node, *args, **kwargs)
+        node.heuristic_value = return_value
+        return return_value
+
+    return wrapper
+
+
+@singleton
 class HeuristicSimpleTreat(Heuristic):
     TREAT_TYPES = [  # These types should be in descending order by 'value'
         Treat(x_template='xxxxx', o_template='ooooo', my_turn_value=1000000000, opponent_turn_value=1000000000, terminated=True),
@@ -48,6 +61,7 @@ class HeuristicSimpleTreat(Heuristic):
         1000000000,
     )
 
+    @update_node_heuristic_value
     @Analyzer.update_time(Analyzer.HEURISTIC_CALCULATE)
     def calculate(self, node: 'Node', *args, **kwargs) -> float:
         score = 0
@@ -78,7 +92,12 @@ class HeuristicSimpleTreat(Heuristic):
                     if treat.terminated:
                         return score
 
-        # for capture in node.find_captures_to_delete(TileXY.from_tuple(node.new_move)):
-        #     score += self.CAPTURE_VALUES[node.capture_count]
+        return score + node.capture_value
 
-        return score
+    @classmethod
+    def update_capture_value(cls, node: 'Node') -> int:
+        capture_count = node.captures_x if node.maximizing_player else node.captures_o
+        index = capture_count if capture_count <= 4 else 4
+        value = cls.CAPTURE_VALUES[index]
+        node.capture_value += value if node.maximizing_player else value * (-1)
+        return value

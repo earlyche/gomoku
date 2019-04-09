@@ -31,16 +31,22 @@ class TileView(GenericAPIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         tile = serializer.save()
-
-        node = Node.from_game(game=tile.game, player=tile.player)
+        game = tile.game
+        player = tile.player
+        node = Node.from_game(game=game, player=player)
 
         for capture in node.find_captures_to_delete(tile_xy=TileXY.from_serializer(tile)):
-            Tile.objects.filter(game=tile.game,
+            Tile.objects.filter(game=game,
                                 x_coordinate__in=(capture[0].x, capture[1].x),
                                 y_coordinate__in=(capture[0].y, capture[1].y),).delete()
+            if player == game.player_1:
+                game.captures_x += 1
+                game.save()
+            elif player == game.player_2:
+                game.captures_o += 1
+                game.save()
 
         winner = GameRules().is_terminated(node)
-
         tiles = Tile.objects.filter(game=tile.game)
         tiles_serializer = self.serializer_class(instance=tiles, many=True)
         return Response(
@@ -62,7 +68,7 @@ class NextMoveView(APIView):
 
         Analyzer.refresh()
         value, chosen_node = self._get_move(game, player)
-        self._print_logs(value, chosen_node)
+        # self._print_logs(value, chosen_node)
 
         return Response(
             {
@@ -72,18 +78,18 @@ class NextMoveView(APIView):
             status.HTTP_200_OK
         )
 
-    @staticmethod
     @Analyzer.update_time(Analyzer.ALL_TIME)
-    def _get_move(game, player):
+    def _get_move(self, game, player):
         node = Node.from_game(game, player)
         minimax = Minimax(HeuristicSimpleTreat())
         value, chosen_node = minimax.calculate_minimax(node, 2)
+        self._print_logs(value, node)
         return value, chosen_node
 
     @staticmethod
     def _print_logs(value: float, node: Node):
         if not node:
             return
-        node.print_children(0)
+        # node.print_children(0)
         Analyzer.print_results()
         print(value)

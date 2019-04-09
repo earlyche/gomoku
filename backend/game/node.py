@@ -5,9 +5,9 @@ from copy import deepcopy
 from sortedcontainers import SortedList
 from django.utils.functional import cached_property
 
-from game.analyzer import Analyzer
 from game.models import Tile
 from game.internal_types import TileXY
+from game.heuristics import HeuristicSimpleTreat
 
 
 if TYPE_CHECKING:
@@ -24,10 +24,11 @@ class Node:
             player_2: str,
             maximizing_player: bool,
             tiles: Dict[str, List[Tuple[int, int]]],
-            should_inspect: Set[Tuple[int, int]] = None,
-            lines: Dict[Tuple[int, int], str] = None,
             new_move: Tuple[int, int] = None,
+            should_inspect: Set[Tuple[int, int]] = None,
             father: 'Node' = None,
+            captures_x: int = None,
+            captures_o: int = None,
     ):
         self.player_1 = player_1
         self.player_2 = player_2
@@ -35,14 +36,16 @@ class Node:
         self.tiles = tiles
         self.new_move = new_move
         self.should_inspect = should_inspect or self._get_inspections()
-        self._lines = lines
-        self._children: Dict[Tuple[int, int], Node] = {}
         self.father = father
+
+        self._children: Dict[Tuple[int, int], Node] = {}
         self.heuristic_value = None
         self._sorted_tiles = None
-        self.capture_count = 0
-
+        self.captures_x = captures_x if captures_x else 0
+        self.captures_o = captures_o if captures_o else 0
+        self.capture_value = 0
         self.chosen: Union[Tuple[Tuple[int, int], float], None] = None
+        self._lines = None
 
     @property
     def children_amount(self) -> int:
@@ -56,11 +59,11 @@ class Node:
     def another_player(self):
         return self.player_2 if self.maximizing_player else self.player_1
 
-    @cached_property
+    @property
     def used_tiles(self) -> List[Tuple[int, int]]:
         return self.tiles[self.player_1] + self.tiles[self.player_2]
 
-    @cached_property
+    @property
     def tiles_set(self) -> Set[Tuple[int, int]]:
         return set(self.used_tiles)
 
@@ -98,9 +101,32 @@ class Node:
             new_move=tile,
             father=self,
         )
+        captures = node.find_captures_to_delete(TileXY.from_tuple(node.new_move))
+        if captures:
+            node.update_from_captures(captures)
+
+        if node.new_move == (6, 10):
+            print(captures)
+            print(node.maximizing_player)
+            print(node.pretty)
+
         return node
 
-    @Analyzer.update_time(Analyzer.HEURISTIC_FIND_LINES)
+    def update_from_captures(self, captures: List[Tuple[TileXY, TileXY]]):
+        for capture in captures:
+            HeuristicSimpleTreat().update_capture_value(self)
+
+            capture_0_tuple = capture[0].to_tuple()
+            capture_1_tuple = capture[1].to_tuple()
+            if self.maximizing_player:
+                self.captures_x += 1
+            else:
+                self.captures_o += 1
+            self.tiles[self.another_player].remove(capture_0_tuple)
+            self.tiles[self.another_player].remove(capture_1_tuple)
+            self.should_inspect.add(capture_0_tuple)
+            self.should_inspect.add(capture_1_tuple)
+
     def _find_lines(self):
         # TODO: add missing tiles between divided areas ??? or check that it isn't important
         self._lines = defaultdict(str)
@@ -179,6 +205,7 @@ class Node:
         print("\t" * tabs,
               self.new_move, "->",
               self.heuristic_value,
+              self.capture_value,
               f"({self.maximizing_player})",
               f"CHOOSE: {self.chosen}" if self.chosen else "")
 
@@ -196,9 +223,11 @@ class Node:
             player_2=game.player_2,
             maximizing_player=game.player_1 == player,
             tiles=data,
+            captures_x=game.captures_x,
+            captures_o=game.captures_o,
         )
 
-    def find_captures_to_delete(self, tile_xy: TileXY) -> List[TileXY]:
+    def find_captures_to_delete(self, tile_xy: TileXY) -> List[Tuple[TileXY, TileXY]]:
         captures = []
         template = 'xoox' if self.maximizing_player else 'oxxo'
         lines = self.lines
@@ -268,6 +297,10 @@ class Node:
                      TileXY(x=tile_xy.x - 2, y=tile_xy.y + 2),)
                 )
 
+        if self.maximizing_player:
+            self.captures_x += len(captures)
+        else:
+            self.captures_o += len(captures)
         return captures
 
     def __str__(self):
