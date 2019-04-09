@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from collections import namedtuple
 from typing import TYPE_CHECKING, NamedTuple
 
 from game.analyzer import Analyzer

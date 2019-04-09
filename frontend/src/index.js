@@ -107,7 +107,7 @@ class Game extends React.Component {
     })
     .catch(error => {
       console.log(error);
-      alert(error.response.status + " " + error.response.statusText);
+      alert("Error");
     });
   }
 
@@ -179,7 +179,7 @@ class Game extends React.Component {
         return [x, y]
       })
       .catch(error => {
-        alert(error.response.status + " " + error.response.statusText);
+        alert("Error");
         console.log(error);
       });
   }
@@ -214,8 +214,8 @@ class Game extends React.Component {
       }
     })
     .catch(error => {
-      console.log(error.response);
-      alert(error.response.status + " " + error.response.statusText);
+      alert("Error");
+      console.log(error);
     });
   }
 
