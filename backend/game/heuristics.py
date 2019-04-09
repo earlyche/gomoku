@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, NamedTuple
 
 from game.analyzer import Analyzer
+from game.internal_types import TileXY
 
 if TYPE_CHECKING:
     from game.node import Node
@@ -29,8 +30,8 @@ class Heuristic(ABC):
 class HeuristicSimpleTreat(Heuristic):
     TREAT_TYPES = [  # These types should be in descending order by 'value'
         Treat(x_template='xxxxx', o_template='ooooo', my_turn_value=1000000000, opponent_turn_value=1000000000, terminated=True),
-        Treat(x_template='-xxxx-', o_template='-oooo-', my_turn_value=1000000, opponent_turn_value=1000000),
-        Treat(x_template='-xxxx', o_template='-oooo', my_turn_value=1000000, opponent_turn_value=100000),
+        Treat(x_template='-xxxx-', o_template='-oooo-', my_turn_value=2000000, opponent_turn_value=1000000),
+        Treat(x_template='-xxxx', o_template='-oooo', my_turn_value=2000000, opponent_turn_value=100000),
         Treat(x_template='xxx-x', o_template='ooo-o', my_turn_value=1000000, opponent_turn_value=100000),
         Treat(x_template='xx-xx', o_template='oo-oo', my_turn_value=1000000, opponent_turn_value=100000),
         Treat(x_template='-xxx-', o_template='-ooo-', my_turn_value=100000, opponent_turn_value=10000),
@@ -38,6 +39,14 @@ class HeuristicSimpleTreat(Heuristic):
         Treat(x_template='xxx-', o_template='ooo-', my_turn_value=6000, opponent_turn_value=2000),
         Treat(x_template='-x--xx-', o_template='-o--oo-', my_turn_value=5000, opponent_turn_value=100),
     ]
+
+    CAPTURE_VALUES = (
+        10000,
+        50000,
+        100000,
+        500000,
+        1000000000,
+    )
 
     @Analyzer.update_time(Analyzer.HEURISTIC_CALCULATE)
     def calculate(self, node: 'Node', *args, **kwargs) -> float:
@@ -47,7 +56,8 @@ class HeuristicSimpleTreat(Heuristic):
         for line_key, line in node.lines.items():
             for treat in self.TREAT_TYPES:
 
-                if treat.x_template in line or treat.x_template[::-1] in line:
+                if len(treat.x_template) >= len(line) and \
+                        treat.x_template in line or treat.x_template[::-1] in line:
                     if maximizing_player:
                         score += treat.my_turn_value
 
@@ -57,7 +67,8 @@ class HeuristicSimpleTreat(Heuristic):
                     if treat.terminated:
                         return score
 
-                if treat.o_template in line or treat.o_template[::-1] in line:
+                if len(treat.o_template) >= len(line) and \
+                        treat.o_template in line or treat.o_template[::-1] in line:
                     if not maximizing_player:
                         score += treat.my_turn_value * (-1)
 
@@ -66,5 +77,8 @@ class HeuristicSimpleTreat(Heuristic):
 
                     if treat.terminated:
                         return score
+
+        # for capture in node.find_captures_to_delete(TileXY.from_tuple(node.new_move)):
+        #     score += self.CAPTURE_VALUES[node.capture_count]
 
         return score

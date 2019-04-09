@@ -40,6 +40,7 @@ class Node:
         self._children: Dict[Tuple[int, int], Node] = {}
         self.father = father
         self.heuristic_value = None
+        self.capture_count = 0
 
         self.chosen: Union[Tuple[Tuple[int, int], float], None] = None
 
@@ -212,44 +213,58 @@ class Node:
             if (tile_xy.x - 1, tile_xy.y) in tiles[self.another_player] \
                     and (tile_xy.x - 2, tile_xy.y) in tiles[self.another_player] \
                     and (tile_xy.x - 3, tile_xy.y) in tiles[self.player]:
-                captures.append(TileXY(x=tile_xy.x - 1, y=tile_xy.y))
-                captures.append(TileXY(x=tile_xy.x - 2, y=tile_xy.y))
+                captures.append(
+                    (TileXY(x=tile_xy.x - 1, y=tile_xy.y),
+                     TileXY(x=tile_xy.x - 2, y=tile_xy.y),)
+                )
 
         if template in lines[(2, tile_xy.x)]:  # Vertical
             if (tile_xy.x, tile_xy.y + 1) in tiles[self.another_player] \
                     and (tile_xy.x, tile_xy.y + 2) in tiles[self.another_player] \
                     and (tile_xy.x, tile_xy.y + 3) in tiles[self.player]:
-                captures.append(TileXY(x=tile_xy.x, y=tile_xy.y + 1))
-                captures.append(TileXY(x=tile_xy.x, y=tile_xy.y + 2))
+                captures.append(
+                    (TileXY(x=tile_xy.x, y=tile_xy.y + 1),
+                     TileXY(x=tile_xy.x, y=tile_xy.y + 2),)
+                )
             if (tile_xy.x, tile_xy.y - 1) in tiles[self.another_player] \
                     and (tile_xy.x, tile_xy.y - 2) in tiles[self.another_player] \
                     and (tile_xy.x, tile_xy.y - 3) in tiles[self.player]:
-                captures.append(TileXY(x=tile_xy.x, y=tile_xy.y - 1))
-                captures.append(TileXY(x=tile_xy.x, y=tile_xy.y - 2))
+                captures.append(
+                    (TileXY(x=tile_xy.x, y=tile_xy.y - 1),
+                     TileXY(x=tile_xy.x, y=tile_xy.y - 2),)
+                )
 
         if template in lines[(3, tile_xy.x - tile_xy.y)]:  # Diagonal (from up-left to down-right)
             if (tile_xy.x + 1, tile_xy.y + 1) in tiles[self.another_player] \
                     and (tile_xy.x + 2, tile_xy.y + 2) in tiles[self.another_player] \
                     and (tile_xy.x + 3, tile_xy.y + 3) in tiles[self.player]:
-                captures.append(TileXY(x=tile_xy.x + 1, y=tile_xy.y + 1))
-                captures.append(TileXY(x=tile_xy.x + 2, y=tile_xy.y + 2))
+                captures.append(
+                    (TileXY(x=tile_xy.x + 1, y=tile_xy.y + 1),
+                     TileXY(x=tile_xy.x + 2, y=tile_xy.y + 2),)
+                )
             if (tile_xy.x - 1, tile_xy.y - 1) in tiles[self.another_player] \
                     and (tile_xy.x - 2, tile_xy.y - 2) in tiles[self.another_player] \
                     and (tile_xy.x - 3, tile_xy.y - 3) in tiles[self.player]:
-                captures.append(TileXY(x=tile_xy.x - 1, y=tile_xy.y - 1))
-                captures.append(TileXY(x=tile_xy.x - 2, y=tile_xy.y - 2))
+                captures.append(
+                    (TileXY(x=tile_xy.x - 1, y=tile_xy.y - 1),
+                     TileXY(x=tile_xy.x - 2, y=tile_xy.y - 2),)
+                )
 
         if template in lines[(4, tile_xy.x + tile_xy.y)]:  # Diagonal (from up-right to down-left)
             if (tile_xy.x + 1, tile_xy.y - 1) in tiles[self.another_player] \
                     and (tile_xy.x + 2, tile_xy.y - 2) in tiles[self.another_player] \
                     and (tile_xy.x + 3, tile_xy.y - 3) in tiles[self.player]:
-                captures.append(TileXY(x=tile_xy.x + 1, y=tile_xy.y - 1))
-                captures.append(TileXY(x=tile_xy.x + 2, y=tile_xy.y - 2))
+                captures.append(
+                    (TileXY(x=tile_xy.x + 1, y=tile_xy.y - 1),
+                     TileXY(x=tile_xy.x + 2, y=tile_xy.y - 2),)
+                )
             if (tile_xy.x - 1, tile_xy.y + 1) in tiles[self.another_player] \
                     and (tile_xy.x - 2, tile_xy.y + 2) in tiles[self.another_player] \
                     and (tile_xy.x - 3, tile_xy.y + 3) in tiles[self.player]:
-                captures.append(TileXY(x=tile_xy.x - 1, y=tile_xy.y + 1))
-                captures.append(TileXY(x=tile_xy.x - 2, y=tile_xy.y + 2))
+                captures.append(
+                    (TileXY(x=tile_xy.x - 1, y=tile_xy.y + 1),
+                     TileXY(x=tile_xy.x - 2, y=tile_xy.y + 2),)
+                )
 
         return captures
 
