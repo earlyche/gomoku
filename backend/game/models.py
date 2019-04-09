@@ -1,4 +1,10 @@
+from typing import TYPE_CHECKING, List
+
 from django.db import models
+
+
+if TYPE_CHECKING:
+    from game.internal_types import CaptureElement
 
 
 class Game(models.Model):

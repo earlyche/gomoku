@@ -10,6 +10,7 @@ from game.algorithm import Minimax
 from game.heuristics import HeuristicSimpleTreat
 from game.rules import GameRules
 from game.analyzer import Analyzer
+from game.internal_types import TileXY
 
 
 class GameView(GenericAPIView):
@@ -32,7 +33,11 @@ class TileView(GenericAPIView):
         tile = serializer.save()
 
         node = Node.from_game(game=tile.game, player=tile.player)
-        winner = GameRules.is_terminated(node)
+
+        for capture in node.find_captures_to_delete(tile_xy=TileXY.from_serializer(tile)):
+            Tile.objects.filter(game=tile.game, x_coordinate=capture.x, y_coordinate=capture.y).delete()
+
+        winner = GameRules().is_terminated(node)
 
         tiles = Tile.objects.filter(game=tile.game)
         tiles_serializer = self.serializer_class(instance=tiles, many=True)
