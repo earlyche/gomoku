@@ -35,7 +35,9 @@ class TileView(GenericAPIView):
         player = game.player_1 if tile.player == game.player_2 else game.player_2
         node = Node.from_game(game=game, player=player)
 
-        for capture in node.find_captures_to_delete(tile_xy=TileXY.from_serializer(tile)):
+        captures = node.find_captures_to_delete(tile_xy=TileXY.from_serializer(tile))
+        node.update_from_captures(captures)
+        for capture in captures:
             Tile.objects.filter(game=game, x_coordinate=capture[0].x, y_coordinate=capture[0].y).delete()
             Tile.objects.filter(game=game, x_coordinate=capture[1].x, y_coordinate=capture[1].y).delete()
 
@@ -94,6 +96,6 @@ class NextMoveView(APIView):
     def _print_logs(value: float, node: Node):
         if not node:
             return
-        node.print_children(0)
+        # node.print_children(0)
         Analyzer.print_results()
         print(value)
