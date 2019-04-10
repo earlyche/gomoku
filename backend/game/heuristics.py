@@ -96,8 +96,8 @@ class HeuristicSimpleTreat(Heuristic):
 
     @classmethod
     def update_capture_value(cls, node: 'Node') -> int:
-        capture_count = node.captures_x if node.maximizing_player else node.captures_o
+        capture_count = node.captures_o if node.maximizing_player else node.captures_x
         index = capture_count if capture_count <= 4 else 4
         value = cls.CAPTURE_VALUES[index]
-        node.capture_value += value if node.maximizing_player else value * (-1)
+        node.capture_value += value * (-1) if node.maximizing_player else value
         return value

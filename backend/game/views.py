@@ -32,18 +32,18 @@ class TileView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
         tile = serializer.save()
         game = tile.game
-        player = tile.player
+        player = game.player_1 if tile.player == game.player_2 else game.player_2
         node = Node.from_game(game=game, player=player)
 
         for capture in node.find_captures_to_delete(tile_xy=TileXY.from_serializer(tile)):
-            Tile.objects.filter(game=game,
-                                x_coordinate__in=(capture[0].x, capture[1].x),
-                                y_coordinate__in=(capture[0].y, capture[1].y),).delete()
+            Tile.objects.filter(game=game, x_coordinate=capture[0].x, y_coordinate=capture[0].y).delete()
+            Tile.objects.filter(game=game, x_coordinate=capture[1].x, y_coordinate=capture[1].y).delete()
+
             if player == game.player_1:
-                game.captures_x += 1
+                game.captures_o += 1
                 game.save()
             elif player == game.player_2:
-                game.captures_o += 1
+                game.captures_x += 1
                 game.save()
 
         winner = GameRules().is_terminated(node)
@@ -52,6 +52,10 @@ class TileView(GenericAPIView):
         return Response(
             {
                 "tiles": tiles_serializer.data,
+                "captures": {
+                    'x': game.captures_x,
+                    'o': game.captures_o,
+                },
                 "winner": winner,
             },
             status.HTTP_201_CREATED,
@@ -90,6 +94,6 @@ class NextMoveView(APIView):
     def _print_logs(value: float, node: Node):
         if not node:
             return
-        # node.print_children(0)
+        node.print_children(0)
         Analyzer.print_results()
         print(value)
