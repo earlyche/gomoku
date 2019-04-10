@@ -1,10 +1,4 @@
-from typing import TYPE_CHECKING, List
-
 from django.db import models
-
-
-if TYPE_CHECKING:
-    from game.internal_types import CaptureElement
 
 
 class Game(models.Model):
@@ -13,6 +7,8 @@ class Game(models.Model):
     player_2 = models.CharField(max_length=30)
     start_date = models.DateTimeField(auto_now_add=True)
     winner = models.CharField(max_length=30, null=True)
+    captures_x = models.PositiveIntegerField(default=0)
+    captures_o = models.PositiveIntegerField(default=0)
 
 
 class Tile(models.Model):

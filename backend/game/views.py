@@ -31,19 +31,31 @@ class TileView(GenericAPIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         tile = serializer.save()
-
-        node = Node.from_game(game=tile.game, player=tile.player)
+        game = tile.game
+        player = game.player_1 if tile.player == game.player_2 else game.player_2
+        node = Node.from_game(game=game, player=player)
 
         for capture in node.find_captures_to_delete(tile_xy=TileXY.from_serializer(tile)):
-            Tile.objects.filter(game=tile.game, x_coordinate=capture.x, y_coordinate=capture.y).delete()
+            Tile.objects.filter(game=game, x_coordinate=capture[0].x, y_coordinate=capture[0].y).delete()
+            Tile.objects.filter(game=game, x_coordinate=capture[1].x, y_coordinate=capture[1].y).delete()
+
+            if player == game.player_1:
+                game.captures_o += 1
+                game.save()
+            elif player == game.player_2:
+                game.captures_x += 1
+                game.save()
 
         winner = GameRules().is_terminated(node)
-
         tiles = Tile.objects.filter(game=tile.game)
         tiles_serializer = self.serializer_class(instance=tiles, many=True)
         return Response(
             {
                 "tiles": tiles_serializer.data,
+                "captures": {
+                    'x': game.captures_x,
+                    'o': game.captures_o,
+                },
                 "winner": winner,
             },
             status.HTTP_201_CREATED,
@@ -60,7 +72,7 @@ class NextMoveView(APIView):
 
         Analyzer.refresh()
         value, chosen_node = self._get_move(game, player)
-        self._print_logs(value, chosen_node)
+        # self._print_logs(value, chosen_node)
 
         return Response(
             {
@@ -70,12 +82,12 @@ class NextMoveView(APIView):
             status.HTTP_200_OK
         )
 
-    @staticmethod
     @Analyzer.update_time(Analyzer.ALL_TIME)
-    def _get_move(game, player):
+    def _get_move(self, game, player):
         node = Node.from_game(game, player)
         minimax = Minimax(HeuristicSimpleTreat())
         value, chosen_node = minimax.calculate_minimax(node, 2)
+        self._print_logs(value, node)
         return value, chosen_node
 
     @staticmethod

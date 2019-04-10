@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
-from collections import namedtuple
 from typing import TYPE_CHECKING, NamedTuple
+from functools import wraps
+
+from singleton_decorator import singleton
 
 from game.analyzer import Analyzer
 
@@ -23,15 +25,26 @@ class Heuristic(ABC):
         super().__init__(*args, **kwargs)
 
     @abstractmethod
-    def calculate(self, node: 'Node', *args, **kwargs) -> float:  #TODO: change float to int
+    def calculate(self, node: 'Node', *args, **kwargs) -> float:  # TODO: change float to int
         pass
 
 
+def update_node_heuristic_value(func):
+    @wraps(func)
+    def wrapper(self, node: 'Node', *args, **kwargs):
+        return_value = func(self, node, *args, **kwargs)
+        node.heuristic_value = return_value
+        return return_value
+
+    return wrapper
+
+
+@singleton
 class HeuristicSimpleTreat(Heuristic):
     TREAT_TYPES = [  # These types should be in descending order by 'value'
         Treat(x_template='xxxxx', o_template='ooooo', my_turn_value=1000000000, opponent_turn_value=1000000000, terminated=True),
-        Treat(x_template='-xxxx-', o_template='-oooo-', my_turn_value=1000000, opponent_turn_value=1000000),
-        Treat(x_template='-xxxx', o_template='-oooo', my_turn_value=1000000, opponent_turn_value=100000),
+        Treat(x_template='-xxxx-', o_template='-oooo-', my_turn_value=2000000, opponent_turn_value=1000000),
+        Treat(x_template='-xxxx', o_template='-oooo', my_turn_value=2000000, opponent_turn_value=100000),
         Treat(x_template='xxx-x', o_template='ooo-o', my_turn_value=1000000, opponent_turn_value=100000),
         Treat(x_template='xx-xx', o_template='oo-oo', my_turn_value=1000000, opponent_turn_value=100000),
         Treat(x_template='-xxx-', o_template='-ooo-', my_turn_value=100000, opponent_turn_value=10000),
@@ -40,6 +53,15 @@ class HeuristicSimpleTreat(Heuristic):
         Treat(x_template='-x--xx-', o_template='-o--oo-', my_turn_value=5000, opponent_turn_value=100),
     ]
 
+    CAPTURE_VALUES = (
+        10000,
+        50000,
+        100000,
+        500000,
+        1000000000,
+    )
+
+    @update_node_heuristic_value
     @Analyzer.update_time(Analyzer.HEURISTIC_CALCULATE)
     def calculate(self, node: 'Node', *args, **kwargs) -> float:
         score = 0
@@ -48,7 +70,8 @@ class HeuristicSimpleTreat(Heuristic):
         for line_key, line in node.lines.items():
             for treat in self.TREAT_TYPES:
 
-                if treat.x_template in line or treat.x_template[::-1] in line:
+                if len(treat.x_template) >= len(line) and \
+                        treat.x_template in line or treat.x_template[::-1] in line:
                     if maximizing_player:
                         score += treat.my_turn_value
 
@@ -58,7 +81,8 @@ class HeuristicSimpleTreat(Heuristic):
                     if treat.terminated:
                         return score
 
-                if treat.o_template in line or treat.o_template[::-1] in line:
+                if len(treat.o_template) >= len(line) and \
+                        treat.o_template in line or treat.o_template[::-1] in line:
                     if not maximizing_player:
                         score += treat.my_turn_value * (-1)
 
@@ -68,4 +92,12 @@ class HeuristicSimpleTreat(Heuristic):
                     if treat.terminated:
                         return score
 
-        return score
+        return score + node.capture_value
+
+    @classmethod
+    def update_capture_value(cls, node: 'Node') -> int:
+        capture_count = node.captures_o if node.maximizing_player else node.captures_x
+        index = capture_count if capture_count <= 4 else 4
+        value = cls.CAPTURE_VALUES[index]
+        node.capture_value += value * (-1) if node.maximizing_player else value
+        return value

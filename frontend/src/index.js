@@ -72,6 +72,8 @@ class Game extends React.Component {
       xIsBot: null,
       moveTime: null,
       botPlayer: null,
+      oCaptures: 0,
+      xCaptures: 0,
     };
   }
 
@@ -88,6 +90,8 @@ class Game extends React.Component {
     .then(response => {
       const tiles = response.data.tiles.slice();
       const winner = response.data.winner;
+      const xCaptures = response.data.captures.x;
+      const oCaptures = response.data.captures.o;
       const squares = Array(this.state.x_size * this.state.y_size).fill(null);
 
       for (let i = 0; i < tiles.length; i++) {
@@ -100,6 +104,8 @@ class Game extends React.Component {
         squares: squares,
         winner: winner,
         xIsNext: !this.state.xIsNext,
+        xCaptures: xCaptures,
+        oCaptures: oCaptures,
       });
 
       this.forceUpdate();
@@ -107,7 +113,7 @@ class Game extends React.Component {
     })
     .catch(error => {
       console.log(error);
-      alert(error.response.status + " " + error.response.statusText);
+      alert("Error");
     });
   }
 
@@ -130,6 +136,9 @@ class Game extends React.Component {
   }
 
   getAdviceAndMove() {
+    if (this.state.winner) {
+      return
+    }
     this.getAdvice()
       .then(data => {
         const x = data[0];
@@ -179,7 +188,7 @@ class Game extends React.Component {
         return [x, y]
       })
       .catch(error => {
-        alert(error.response.status + " " + error.response.statusText);
+        alert("Error");
         console.log(error);
       });
   }
@@ -206,6 +215,8 @@ class Game extends React.Component {
         xIsBot: botPlayer ? (botPlayer === 'X') : null,
         botPlayer: botPlayer,
         moveTime: null,
+        oCaptures: 0,
+        xCaptures: 0,
       });
     })
     .then(() => {
@@ -214,8 +225,8 @@ class Game extends React.Component {
       }
     })
     .catch(error => {
-      console.log(error.response);
-      alert(error.response.status + " " + error.response.statusText);
+      alert("Error");
+      console.log(error);
     });
   }
 
@@ -253,7 +264,7 @@ class Game extends React.Component {
     if (this.state.moveTime) {
       moveTime =
         <div className="move-time">
-          Move time: {this.state.moveTime.toFixed(3)} sec.
+          <p>Move time: {this.state.moveTime.toFixed(3)} sec.</p>
         </div>
     }
 
@@ -282,6 +293,10 @@ class Game extends React.Component {
           <div>
             {advice_button}
           </div>
+        </div>
+        <div className="captures">
+          <p>X captures: {this.state.xCaptures}</p>
+          <p>O captures: {this.state.oCaptures}</p>
         </div>
         {moveTime}
       </div>
