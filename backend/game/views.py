@@ -94,6 +94,6 @@ class NextMoveView(APIView):
     def _print_logs(value: float, node: Node):
         if not node:
             return
-        node.print_children(0)
+        # node.print_children(0)
         Analyzer.print_results()
         print(value)

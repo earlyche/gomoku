@@ -1,3 +1,4 @@
+import re
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, NamedTuple
 from functools import wraps
@@ -41,6 +42,11 @@ def update_node_heuristic_value(func):
 
 @singleton
 class HeuristicSimpleTreat(Heuristic):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.pattern_x = re.compile("|".join([treat.x_template for treat in self.TREAT_TYPES]))
+        self.pattern_o = re.compile("|".join([treat.o_template for treat in self.TREAT_TYPES]))
+
     TREAT_TYPES = [  # These types should be in descending order by 'value'
         Treat(x_template='xxxxx', o_template='ooooo', my_turn_value=1000000000, opponent_turn_value=1000000000, terminated=True),
         Treat(x_template='-xxxx-', o_template='-oooo-', my_turn_value=2000000, opponent_turn_value=1000000),
