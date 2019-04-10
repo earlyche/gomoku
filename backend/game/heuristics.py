@@ -29,6 +29,8 @@ class Heuristic(ABC):
     def calculate(self, node: 'Node', *args, **kwargs) -> float:  # TODO: change float to int
         pass
 
+    # TODO: add update_capture_value
+
 
 def update_node_heuristic_value(func):
     @wraps(func)
@@ -44,19 +46,30 @@ def update_node_heuristic_value(func):
 class HeuristicSimpleTreat(Heuristic):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.pattern_x = re.compile("|".join([treat.x_template for treat in self.TREAT_TYPES]))
-        self.pattern_o = re.compile("|".join([treat.o_template for treat in self.TREAT_TYPES]))
+        self.pattern_x = re.compile(f'(?=({"|".join([treat.x_template for treat in self.TREAT_TYPES])}))')
+        self.pattern_o = re.compile(f'(?=({"|".join([treat.o_template for treat in self.TREAT_TYPES])}))')
 
-    TREAT_TYPES = [  # These types should be in descending order by 'value'
+        self.treats_x = {treat.x_template: (treat.my_turn_value, treat.opponent_turn_value)
+                         for treat in self.TREAT_TYPES}
+
+        self.treats_o = {treat.o_template: (treat.my_turn_value, treat.opponent_turn_value)
+                         for treat in self.TREAT_TYPES}
+
+    TREAT_TYPES = [
         Treat(x_template='xxxxx', o_template='ooooo', my_turn_value=1000000000, opponent_turn_value=1000000000, terminated=True),
         Treat(x_template='-xxxx-', o_template='-oooo-', my_turn_value=2000000, opponent_turn_value=1000000),
         Treat(x_template='-xxxx', o_template='-oooo', my_turn_value=2000000, opponent_turn_value=100000),
-        Treat(x_template='xxx-x', o_template='ooo-o', my_turn_value=1000000, opponent_turn_value=100000),
-        Treat(x_template='xx-xx', o_template='oo-oo', my_turn_value=1000000, opponent_turn_value=100000),
-        Treat(x_template='-xxx-', o_template='-ooo-', my_turn_value=100000, opponent_turn_value=10000),
+        Treat(x_template='xxxx-', o_template='oooo-', my_turn_value=2000000, opponent_turn_value=100000),
+        Treat(x_template='xxx-x', o_template='ooo-o', my_turn_value=2000000, opponent_turn_value=100000),
+        Treat(x_template='x-xxx', o_template='o-ooo', my_turn_value=2000000, opponent_turn_value=100000),
+        Treat(x_template='xx-xx', o_template='oo-oo', my_turn_value=2000000, opponent_turn_value=100000),
+        Treat(x_template='-xxx-', o_template='-ooo-', my_turn_value=200000, opponent_turn_value=10000),
         Treat(x_template='-xx-x-', o_template='-oo-o-', my_turn_value=7000, opponent_turn_value=1000),
+        Treat(x_template='-x-xx-', o_template='-o-oo-', my_turn_value=7000, opponent_turn_value=1000),
         Treat(x_template='xxx-', o_template='ooo-', my_turn_value=6000, opponent_turn_value=2000),
+        Treat(x_template='-xxx', o_template='-ooo', my_turn_value=6000, opponent_turn_value=2000),
         Treat(x_template='-x--xx-', o_template='-o--oo-', my_turn_value=5000, opponent_turn_value=100),
+        Treat(x_template='-xx--x-', o_template='-oo--o-', my_turn_value=5000, opponent_turn_value=100),
     ]
 
     CAPTURE_VALUES = (
@@ -74,29 +87,33 @@ class HeuristicSimpleTreat(Heuristic):
         maximizing_player = node.maximizing_player
 
         for line_key, line in node.lines.items():
-            for treat in self.TREAT_TYPES:
+            if len(line) < 4:
+                continue
 
-                if len(treat.x_template) >= len(line) and \
-                        treat.x_template in line or treat.x_template[::-1] in line:
-                    if maximizing_player:
-                        score += treat.my_turn_value
+            o_treats = self.pattern_o.findall(line)
+            x_treats = self.pattern_x.findall(line)
 
-                    else:
-                        score += treat.opponent_turn_value
-
-                    if treat.terminated:
-                        return score
-
-                if len(treat.o_template) >= len(line) and \
-                        treat.o_template in line or treat.o_template[::-1] in line:
+            if o_treats:
+                for treat in o_treats:
+                    treat_values = self.treats_o[treat]
                     if not maximizing_player:
-                        score += treat.my_turn_value * (-1)
+                        score += treat_values[0] * (-1)
 
                     else:
-                        score += treat.opponent_turn_value * (-1)
+                        score += treat_values[1] * (-1)
 
-                    if treat.terminated:
-                        return score
+                    #  TODO: CHECK IF TERMINATED
+
+            if x_treats:
+                for treat in x_treats:
+                    treat_values = self.treats_x[treat]
+                    if maximizing_player:
+                        score += treat_values[0]
+
+                    else:
+                        score += treat_values[1]
+
+                    #  TODO: CHECK IF TERMINATED
 
         return score + node.capture_value
 

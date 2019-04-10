@@ -277,10 +277,6 @@ class Node:
                      TileXY(x=tile_xy.x - 2, y=tile_xy.y + 2),)
                 )
 
-        if self.maximizing_player:
-            self.captures_x += len(captures)
-        else:
-            self.captures_o += len(captures)
         return captures
 
     def update_from_captures(self, captures: List[Tuple[TileXY, TileXY]]):
