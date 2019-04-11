@@ -1,6 +1,7 @@
 from rest_framework.generics import GenericAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import BasePermission
 from rest_framework import status
 
 from game.serializers import GameSerializer, TileSerializer, NextMoveSerializer
@@ -11,6 +12,18 @@ from game.heuristics import HeuristicSimpleTreat
 from game.rules import GameRules
 from game.analyzer import Analyzer
 from game.internal_types import TileXY
+
+
+class TilePermission(BasePermission):
+    def has_permission(self, request, view) -> bool:
+        serializer = TileSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        game = Game.objects.get(pk=serializer.data["game_id"])
+        player = serializer.data["player"]
+        node = Node.from_game(game, player)
+
+        return GameRules().check_open_threes(node, TileXY.from_dict(serializer.data))
 
 
 class GameView(GenericAPIView):
@@ -26,6 +39,7 @@ class GameView(GenericAPIView):
 
 class TileView(GenericAPIView):
     serializer_class = TileSerializer
+    permission_classes = (TilePermission,)
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)

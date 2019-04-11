@@ -19,6 +19,13 @@ class TileXY(NamedTuple):
         )
 
     @staticmethod
+    def from_dict(data: dict):
+        return TileXY(
+            x=data['x_coordinate'],
+            y=data['y_coordinate'],
+        )
+
+    @staticmethod
     def from_tuple(coordinates_tuple: Tuple[int, int]):
         return TileXY(
             x=coordinates_tuple[0],
