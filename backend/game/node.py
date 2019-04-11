@@ -47,6 +47,10 @@ class Node:
         self.chosen: Union[Tuple[Tuple[int, int], float], None] = None
         self._lines = None
 
+        self._o_open_threes = 0
+        self._x_open_threes = 0
+        self.update_open_threes()
+
     @property
     def children_amount(self) -> int:
         return len(self._children)
@@ -83,6 +87,8 @@ class Node:
     def children(self):
         for coordinate in self.should_inspect:
             new_node = self.create_child_with_new_tile(coordinate)
+            if not new_node:
+                continue
             self._children[coordinate] = new_node  # TODO: Check if exists
             yield new_node
 
@@ -101,11 +107,21 @@ class Node:
             new_move=tile,
             father=self,
         )
+        if node._x_open_threes - self._x_open_threes > 1 or node._o_open_threes - self._o_open_threes > 1:
+            return None
+
         captures = node.find_captures_to_delete(TileXY.from_tuple(node.new_move))
         if captures:
             node.update_from_captures(captures)
 
         return node
+
+    def update_open_threes(self):
+        for line_key, line in self.lines.items():
+            if len(line) < 5:
+                continue
+            self._o_open_threes += len(GameRules().pattern_o.findall(line))
+            self._x_open_threes += len(GameRules().pattern_x.findall(line))
 
     def _find_lines(self):
         # TODO: add missing tiles between divided areas ??? or check that it isn't important
@@ -299,3 +315,6 @@ class Node:
 
     def __getitem__(self, tile):
         return self._children[tile]
+
+
+from game.rules import GameRules
