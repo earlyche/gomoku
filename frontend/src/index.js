@@ -68,6 +68,7 @@ class Game extends React.Component {
       player_1: 'X',
       player_2: 'O',
       allowMove: true,
+      allowAdvice: true,
       winner: null,
       xIsBot: null,
       moveTime: null,
@@ -106,6 +107,7 @@ class Game extends React.Component {
         xIsNext: !this.state.xIsNext,
         xCaptures: xCaptures,
         oCaptures: oCaptures,
+        allowAdvice: true,
       });
 
       this.forceUpdate();
@@ -119,6 +121,11 @@ class Game extends React.Component {
 
   handleClickAddTile(i) {
     if (!this.state.allowMove || this.state.winner) {
+      return;
+    }
+
+    if (this.state.squares[i] === 'X' ||
+      this.state.squares[i] === 'O') {
       return;
     }
 
@@ -152,7 +159,7 @@ class Game extends React.Component {
   handleClickGetAdvice() {
     const squares = this.state.squares.slice();
 
-    if (this.state.winner) {
+    if (this.state.winner || !this.state.allowAdvice) {
       return;
     }
 
@@ -172,7 +179,8 @@ class Game extends React.Component {
     const player = this.state.xIsNext ? this.state.player_1 : this.state.player_2;
 
     this.setState({
-      allowMove: false
+      allowMove: false,
+      allowAdvice: false
     });
 
     return axios.get(BACKEND_ENDPOINT + '/api/v1/game/'+this.state.gameId+'/next_move/'+player)
@@ -211,6 +219,7 @@ class Game extends React.Component {
         squares: Array(this.state.x_size * this.state.y_size).fill(null),
         xIsNext: true,
         allowMove: true,
+        allowAdvice: true,
         winner: null,
         xIsBot: botPlayer ? (botPlayer === 'X') : null,
         botPlayer: botPlayer,
@@ -244,13 +253,9 @@ class Game extends React.Component {
         x_size={this.state.x_size}
         y_size={this.state.y_size}
       />;
-      if (this.state.gameType === GAME_TYPES.MULTIPLAYER) {
-        advice_button = <button onClick={() => this.handleClickGetAdvice()}>
-          Get advice
-        </button>
-      } else {
-        advice_button = null;
-      }
+      advice_button = <button onClick={() => this.handleClickGetAdvice()}>
+      Get advice
+      </button>
       if (this.state.winner) {
         const color = (this.state.botPlayer && this.state.botPlayer === this.state.winner) ? "red" : "green";
         status = <h2 style={{'color': color}}>Winner: {this.state.winner}</h2>;
