@@ -124,8 +124,8 @@ class Game extends React.Component {
       return;
     }
 
-    if (this.state.squares[i] === this.state.player_1 ||
-      this.state.squares[i] === this.state.player_2) {
+    if (this.state.squares[i] === 'X' ||
+      this.state.squares[i] === 'O') {
       return;
     }
 
