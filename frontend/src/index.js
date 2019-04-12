@@ -75,6 +75,7 @@ class Game extends React.Component {
       botPlayer: null,
       oCaptures: 0,
       xCaptures: 0,
+      // moves: 0,
     };
   }
 
@@ -94,6 +95,7 @@ class Game extends React.Component {
       const xCaptures = response.data.captures.x;
       const oCaptures = response.data.captures.o;
       const squares = Array(this.state.x_size * this.state.y_size).fill(null);
+      // const moves = this.state.moves+1;
 
       for (let i = 0; i < tiles.length; i++) {
         squares[
@@ -108,14 +110,11 @@ class Game extends React.Component {
         xCaptures: xCaptures,
         oCaptures: oCaptures,
         allowAdvice: true,
+        // moves: moves,
       });
 
       this.forceUpdate();
 
-    })
-    .catch(error => {
-      console.log(error);
-      alert("Error");
     });
   }
 
@@ -131,11 +130,20 @@ class Game extends React.Component {
 
     if (this.state.gameType === GAME_TYPES.MULTIPLAYER) {
       this.addTile(i)
+      .catch(error => {
+        console.log(error);
+        alert("Error");
+      });
     } else if (this.state.gameType === GAME_TYPES.BOT) {
 
       if (this.state.xIsBot !== this.state.xIsNext) {
-        this.addTile(i).then(() => {
+        this.addTile(i)
+        .then(() => {
           this.getAdviceAndMove();
+        })
+        .catch(error => {
+          console.log(error);
+          alert("Error");
         });
       }
 
@@ -152,7 +160,11 @@ class Game extends React.Component {
         const y = data[1];
         return (y * this.state.x_size) + x;
       }).then(i => {
-        this.addTile(i);
+        this.addTile(i)
+        .catch(error => {
+          console.log(error);
+          alert("Error");
+        });
       })
   }
 
@@ -226,6 +238,7 @@ class Game extends React.Component {
         moveTime: null,
         oCaptures: 0,
         xCaptures: 0,
+        // moves: 0,
       });
     })
     .then(() => {
@@ -302,6 +315,7 @@ class Game extends React.Component {
         <div className="captures">
           <p>X captures: {this.state.xCaptures}</p>
           <p>O captures: {this.state.oCaptures}</p>
+          {/* <p>Moves: {this.state.moves}</p> */}
         </div>
         {moveTime}
       </div>
