@@ -132,7 +132,13 @@ class Game extends React.Component {
       this.addTile(i)
       .catch(error => {
         console.log(error);
-        alert("Error");
+        if (error.hasOwnProperty('response')) {
+          if (error.response.status === 403) {
+            alert("MOVE FORBIDDEN");
+          } else {
+            alert("Error");
+          }
+        }
       });
     } else if (this.state.gameType === GAME_TYPES.BOT) {
 
@@ -143,7 +149,13 @@ class Game extends React.Component {
         })
         .catch(error => {
           console.log(error);
-          alert("Error");
+          if (error.hasOwnProperty('response')) {
+            if (error.response.status === 403) {
+              alert("MOVE FORBIDDEN");
+            } else {
+              alert("Error");
+            }
+          }
         });
       }
 
@@ -163,7 +175,13 @@ class Game extends React.Component {
         this.addTile(i)
         .catch(error => {
           console.log(error);
-          alert("Error");
+          if (error.hasOwnProperty('response')) {
+            if (error.response.status === 403) {
+              alert("MOVE FORBIDDEN");
+            } else {
+              alert("Error");
+            }
+          }
         });
       })
   }
