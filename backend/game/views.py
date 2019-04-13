@@ -41,16 +41,8 @@ class TileView(GenericAPIView):
     serializer_class = TileSerializer
     permission_classes = (TilePermission,)
 
-    def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        tile = serializer.save()
-        game = tile.game
-        player = game.player_1 if tile.player == game.player_2 else game.player_2
-        node = Node.from_game(game=game, player=player)
-
-        captures = node.find_captures_to_delete(tile_xy=TileXY.from_serializer(tile))
-        node.update_from_captures(captures)
+    @staticmethod
+    def _delete_tiles_by_captures(game, player, captures):
         for capture in captures:
             Tile.objects.filter(game=game, x_coordinate=capture[0].x, y_coordinate=capture[0].y).delete()
             Tile.objects.filter(game=game, x_coordinate=capture[1].x, y_coordinate=capture[1].y).delete()
@@ -62,7 +54,20 @@ class TileView(GenericAPIView):
                 game.captures_x += 1
                 game.save()
 
-        winner = GameRules().is_terminated(node)
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        tile = serializer.save()
+        game = tile.game
+        player = game.player_1 if tile.player == game.player_2 else game.player_2
+        node = Node.from_game(game=game, player=player)
+
+        captures = node.find_captures_to_delete(tile_xy=TileXY.from_serializer(tile))
+        node.update_from_captures(captures)
+        self._delete_tiles_by_captures(game, player, captures)
+
+        winner = GameRules().deeper_winner_check(node)
+
         tiles = Tile.objects.filter(game=tile.game)
         tiles_serializer = self.serializer_class(instance=tiles, many=True)
         return Response(

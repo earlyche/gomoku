@@ -9,6 +9,7 @@ const GAME_TYPES = {
   BOT: "bot",
   MULTIPLAYER: "multiplayer",
 };
+const DRAW = "Draw";
 
 
 function Square(props) {
@@ -270,8 +271,13 @@ class Game extends React.Component {
       Get advice
       </button>
       if (this.state.winner) {
-        const color = (this.state.botPlayer && this.state.botPlayer === this.state.winner) ? "red" : "green";
-        status = <h2 style={{'color': color}}>Winner: {this.state.winner}</h2>;
+        if (this.state.winner === DRAW) {
+          const color = "green";
+          status = <h2 style={{'color': color}}>{DRAW}</h2>;
+        } else {
+          const color = (this.state.botPlayer && this.state.botPlayer === this.state.winner) ? "red" : "green";
+          status = <h2 style={{'color': color}}>Winner: {this.state.winner}</h2>;
+        }
       }
 
     } else {
