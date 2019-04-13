@@ -309,6 +309,7 @@ class Node:
             self.tiles[self.player].remove(capture_1_tuple)
             self.should_inspect.add(capture_0_tuple)
             self.should_inspect.add(capture_1_tuple)
+            self._find_lines()
 
     def __str__(self):
         return str(self.tiles)
