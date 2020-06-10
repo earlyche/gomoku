@@ -4,7 +4,7 @@ coreapi==2.3.3
 coreschema==0.0.4
 Cython==0.29.6
 dataclasses==0.6
-Django==2.1.7
+Django==2.2.13
 django-cors-headers==2.4.0
 django-enumchoicefield==1.0.2
 django-rest-swagger==2.2.0
